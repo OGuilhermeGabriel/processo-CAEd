@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAEd — Avaliador de Complexidade Textual e Mutador</title>
+    <meta name="description" content="Sistema inteligente de predição de nível de leitura, análise de canonicidade fonológica e experimentação de mutações textuais do CAEd (Edital 024-2026).">
+    
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Navigation / Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="logo-group">
+                <div class="logo-badge">CAEd</div>
+                <div class="logo-text">
+                    <span class="logo-title">Processo Seletivo • Edital 024-2026</span>
+                    <span class="logo-subtitle">Avaliação de Complexidade Textual & Mutações</span>
+                </div>
+            </div>
+            <div class="header-status">
+                <span id="api-status-dot" class="status-dot"></span>
+                <span id="api-status-text" class="status-label">Verificando API...</span>
+                <a href="/docs" target="_blank" class="api-docs-link" id="btn-api-docs">Swagger /docs ↗</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="app-main">
+        <div class="hero-section">
+            <h1 class="hero-title">Laboratório de Análise e Mutação Textual</h1>
+            <p class="hero-description">
+                Predição de níveis de leitura didáticos (EF1, EF2, EM, Superior) com Calibração de Probabilidades,
+                algoritmo determinístico de <strong>Canonicidade Fonológica (sílabas CV)</strong> e mensuração de impacto via 
+                <strong>Mutações Textuais</strong>.
+            </p>
+        </div>
+
+        <!-- Section 1: Entrada de Texto e Presets Didáticos -->
+        <section class="card input-card" id="section-input">
+            <div class="card-header">
+                <div class="header-title-wrap">
+                    <span class="step-badge">1</span>
+                    <h2>Entrada de Texto Didático</h2>
+                </div>
+                <div class="presets-group">
+                    <span class="presets-label">Exemplos rápidos do corpus:</span>
+                    <button type="button" class="preset-btn" id="btn-preset-ef1" data-preset="ef1">EF1</button>
+                    <button type="button" class="preset-btn" id="btn-preset-ef2" data-preset="ef2">EF2</button>
+                    <button type="button" class="preset-btn" id="btn-preset-em" data-preset="em">Ensino Médio</button>
+                    <button type="button" class="preset-btn" id="btn-preset-sup" data-preset="sup">Superior</button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="textarea-wrapper">
+                    <textarea 
+                        id="input-text" 
+                        class="text-input" 
+                        rows="5" 
+                        placeholder="Cole ou digite aqui o fragmento textual a ser analisado ou selecione um dos exemplos acima..."
+                    ></textarea>
+                    <div class="textarea-footer">
+                        <span id="char-counter" class="counter-text">0 caracteres • 0 palavras</span>
+                        <button type="button" id="btn-clear-text" class="btn-text">Limpar</button>
+                    </div>
+                </div>
+
+                <div class="action-buttons-row">
+                    <button type="button" id="btn-predict" class="btn btn-primary">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text-label">Classificar Nível de Leitura</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Painel de Predição de Complexidade (Resultados) -->
+        <section class="card results-card" id="section-predict-results" style="display: none;">
+            <div class="card-header">
+                <div class="header-title-wrap">
+                    <span class="step-badge step-badge-success">2</span>
+                    <h2>Diagnóstico do Modelo Campeão</h2>
+                </div>
+                <span class="model-badge">LinearSVC Calibrado (Acurácia: 92.07%)</span>
+            </div>
+
+            <div class="card-body">
+                <!-- Grid de Destaques: Nível e Score -->
+                <div class="highlight-grid">
+                    <!-- Card Nível Previsto -->
+                    <div class="highlight-card level-card">
+                        <span class="highlight-label">Nível Didático Previsto</span>
+                        <div id="pred-level-badge" class="level-badge level-ef1">
+                            Ensino Fundamental I
+                        </div>
+                        <p class="highlight-hint">Classe predominante com maior probabilidade a posteriori.</p>
+                    </div>
+
+                    <!-- Card Score Contínuo -->
+                    <div class="highlight-card score-card">
+                        <span class="highlight-label">Score Contínuo Ponderado</span>
+                        <div class="score-display">
+                            <span id="pred-score-value" class="score-number">1.28</span>
+                            <span class="score-scale">/ 4.00</span>
+                        </div>
+                        <div class="score-meter-wrap">
+                            <div id="pred-score-bar" class="score-meter-fill" style="width: 25%;"></div>
+                        </div>
+                        <p class="highlight-hint">Média ponderada: $\sum P(\text{Nível}_k) \times k$</p>
+                    </div>
+
+                    <!-- Card Canonicidade Fonológica CV -->
+                    <div class="highlight-card canonicity-card">
+                        <span class="highlight-label">Canonicidade Fonológica</span>
+                        <div class="canonicity-display">
+                            <span id="pred-canonicity-value" class="canonicity-number">42.5%</span>
+                            <span class="canonicity-tag">Padrão CV</span>
+                        </div>
+                        <p class="highlight-hint">Proporção de vocábulos formados puramente por sílabas Consoante-Vogal.</p>
+                    </div>
+                </div>
+
+                <!-- Distribuição de Probabilidades Calibradas -->
+                <div class="probabilities-section">
+                    <h3 class="subsection-title">Distribuição de Probabilidades por Nível Educacional</h3>
+                    <div class="prob-bars-container" id="prob-bars-container">
+                        <!-- Gerado dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <!-- Métricas Estruturais e Léxicas -->
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <span class="metric-title">Palavras / Sentença</span>
+                        <span id="metric-words-per-sent" class="metric-val">12.4</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Tam. Médio Palavra</span>
+                        <span id="metric-avg-word-len" class="metric-val">4.8 carac.</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Total de Palavras</span>
+                        <span id="metric-total-words" class="metric-val">45</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-title">Total de Caracteres</span>
+                        <span id="metric-total-chars" class="metric-val">248</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Laboratório de Mutações Textuais e Avaliação de Impacto -->
+        <section class="card mutation-card" id="section-mutators">
+            <div class="card-header">
+                <div class="header-title-wrap">
+                    <span class="step-badge step-badge-purple">3</span>
+                    <h2>Laboratório de Mutações Textuais & Impacto</h2>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <p class="section-lead">
+                    Selecione um operador de mutação para transformar o texto e calcular a variação de complexidade
+                    $\Delta(\text{complexidade}) = \text{Score}_{\text{mutado}} - \text{Score}_{\text{original}}$ 
+                    e a integridade léxica contra o vocabulário oficial do CAEd.
+                </p>
+
+                <!-- Seletor de Operadores -->
+                <div class="operator-selector-grid">
+                    <label class="operator-option active" data-operator="troca_palavras">
+                        <input type="radio" name="operator_choice" value="troca_palavras" checked>
+                        <div class="operator-info">
+                            <span class="operator-title">1. Troca de Palavras</span>
+                            <span class="operator-desc">Substituição por sinônimos ou antônimos via NLTK OpenWordNet-PT.</span>
+                        </div>
+                    </label>
+
+                    <label class="operator-option" data-operator="troca_genero">
+                        <input type="radio" name="operator_choice" value="troca_genero">
+                        <div class="operator-info">
+                            <span class="operator-title">2. Troca de Gênero</span>
+                            <span class="operator-desc">Inversão morfológica e concordância nominal (Masc ↔ Fem) via spaCy.</span>
+                        </div>
+                    </label>
+
+                    <label class="operator-option" data-operator="parafrase">
+                        <input type="radio" name="operator_choice" value="parafrase">
+                        <div class="operator-info">
+                            <span class="operator-title">3. Paráfrase Sintática</span>
+                            <span class="operator-desc">Conversão de voz passiva para ativa e reorganização de adjuntos temporais.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Configurações Adicionais do Operador 1 -->
+                <div id="word-swap-configs" class="sub-configs-card">
+                    <div class="config-row">
+                        <div class="config-item">
+                            <label for="select-word-mode" class="config-label">Modo de Substituição:</label>
+                            <select id="select-word-mode" class="config-select">
+                                <option value="sinonimo">Sinônimos (preserva significado aproximado)</option>
+                                <option value="antonimo">Antônimos (inverte significado semântico)</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label for="input-prob-swap" class="config-label">
+                                Taxa de Substituição: <span id="prob-swap-val" class="highlight-val">35%</span>
+                            </label>
+                            <input type="range" id="input-prob-swap" class="config-slider" min="0.10" max="1.0" step="0.05" value="0.35">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Execução -->
+                <div class="action-buttons-row">
+                    <button type="button" id="btn-apply-mutation" class="btn btn-secondary">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text-label">Apenas Gerar Mutação</span>
+                    </button>
+                    <button type="button" id="btn-analyze-impact" class="btn btn-purple">
+                        <span class="btn-icon">📊</span>
+                        <span class="btn-text-label">Avaliar Impacto Completo na Complexidade</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Comparativo Lado a Lado (Original vs Mutado) -->
+        <section class="card comparison-card" id="section-comparison" style="display: none;">
+            <div class="card-header">
+                <div class="header-title-wrap">
+                    <span class="step-badge step-badge-purple">4</span>
+                    <h2>Comparativo Lado a Lado & Variação de Complexidade</h2>
+                </div>
+                <span id="badge-impact-status" class="impact-badge impact-preserved">Preservada (Δ = 0)</span>
+            </div>
+
+            <div class="card-body">
+                <!-- Textos Comparativos -->
+                <div class="comparison-grid">
+                    <div class="text-comparison-pane pane-original">
+                        <div class="pane-header">
+                            <span class="pane-title">Texto Original</span>
+                            <span id="pane-orig-level" class="pane-tag">Ensino Fundamental I</span>
+                        </div>
+                        <div id="display-orig-text" class="pane-content">
+                            <!-- Preenchido via JS -->
+                        </div>
+                        <div class="pane-footer">
+                            <span id="pane-orig-score">Score: 1.250</span> • 
+                            <span id="pane-orig-cv">CV: 38.0%</span>
+                        </div>
+                    </div>
+
+                    <div class="text-comparison-pane pane-mutated">
+                        <div class="pane-header">
+                            <span class="pane-title">Texto Mutado</span>
+                            <span id="pane-mut-level" class="pane-tag">Ensino Fundamental I</span>
+                        </div>
+                        <div id="display-mut-text" class="pane-content">
+                            <!-- Preenchido via JS -->
+                        </div>
+                        <div class="pane-footer">
+                            <span id="pane-mut-score">Score: 1.290</span> • 
+                            <span id="pane-mut-cv">CV: 37.5%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel de Impacto Quantitativo -->
+                <div class="impact-results-panel" id="impact-results-panel">
+                    <div class="impact-metric-box">
+                        <span class="impact-metric-title">Variação de Classe Didática</span>
+                        <span id="delta-class-val" class="impact-metric-num delta-neutral">Δ = 0</span>
+                        <span class="impact-metric-sub">Diferença ordinal (1 a 4)</span>
+                    </div>
+
+                    <div class="impact-metric-box">
+                        <span class="impact-metric-title">Variação de Score Contínuo</span>
+                        <span id="delta-score-val" class="impact-metric-num delta-neutral">+0.0000</span>
+                        <span class="impact-metric-sub">$\Delta(\text{score}) \in [-3.0, +3.0]$</span>
+                    </div>
+
+                    <div class="impact-metric-box">
+                        <span class="impact-metric-title">Palavras Fora do Vocabulário</span>
+                        <span id="out-of-vocab-val" class="impact-metric-num">0.0%</span>
+                        <span class="impact-metric-sub">Integridade léxica no corpus CAEd</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p><strong>CAEd / Edital 024-2026</strong> — Projeto de Análise de Complexidade Textual e Mutações</p>
+            <p class="footer-sub">Desenvolvido com Python 3.12 • spaCy • scikit-learn • NLTK OpenWordNet-PT • FastAPI</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
