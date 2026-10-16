@@ -25,8 +25,6 @@
                 </div>
             </div>
             <div class="header-status">
-                <span id="api-status-dot" class="status-dot"></span>
-                <span id="api-status-text" class="status-label">Verificando API...</span>
                 <a href="/docs" target="_blank" class="api-docs-link" id="btn-api-docs">Swagger /docs ↗</a>
             </div>
         </div>
@@ -51,7 +49,7 @@
                     <h2>Entrada de Texto Didático</h2>
                 </div>
                 <div class="presets-group">
-                    <span class="presets-label">Exemplos rápidos do corpus:</span>
+                    <span class="presets-label">Exemplos reais do corpus (teste):</span>
                     <button type="button" class="preset-btn" id="btn-preset-ef1" data-preset="ef1">EF1</button>
                     <button type="button" class="preset-btn" id="btn-preset-ef2" data-preset="ef2">EF2</button>
                     <button type="button" class="preset-btn" id="btn-preset-em" data-preset="em">Ensino Médio</button>
@@ -73,9 +71,12 @@
                     </div>
                 </div>
 
+                <div id="short-text-warning" class="warning-banner" style="display: none;">
+                    <strong>Aviso sobre extensão textual:</strong> Este texto possui <span id="warning-word-count">0</span> palavras. O modelo foi treinado com excertos didáticos do CAEd compostos por textos completos (~300 a 450 palavras), onde alcança 92,1% de acurácia. Em textos curtos com menos de 100 palavras, a acurácia cai para ~70-82% devido à redução do vocabulário TF-IDF e das métricas estruturais.
+                </div>
+
                 <div class="action-buttons-row">
                     <button type="button" id="btn-predict" class="btn btn-primary">
-                        <span class="btn-icon">⚡</span>
                         <span class="btn-text-label">Classificar Nível de Leitura</span>
                     </button>
                 </div>
@@ -114,7 +115,7 @@
                         <div class="score-meter-wrap">
                             <div id="pred-score-bar" class="score-meter-fill" style="width: 25%;"></div>
                         </div>
-                        <p class="highlight-hint">Média ponderada: $\sum P(\text{Nível}_k) \times k$</p>
+                        <p class="highlight-hint">Média ponderada: &Sigma; (P(Nível<sub>k</sub>) &times; k)</p>
                     </div>
 
                     <!-- Card Canonicidade Fonológica CV -->
@@ -170,7 +171,7 @@
             <div class="card-body">
                 <p class="section-lead">
                     Selecione um operador de mutação para transformar o texto e calcular a variação de complexidade
-                    $\Delta(\text{complexidade}) = \text{Score}_{\text{mutado}} - \text{Score}_{\text{original}}$ 
+                    &Delta;(complexidade) = Score<sub>mutado</sub> &minus; Score<sub>original</sub> 
                     e a integridade léxica contra o vocabulário oficial do CAEd.
                 </p>
 
@@ -223,11 +224,9 @@
                 <!-- Botões de Execução -->
                 <div class="action-buttons-row">
                     <button type="button" id="btn-apply-mutation" class="btn btn-secondary">
-                        <span class="btn-icon">🔄</span>
                         <span class="btn-text-label">Apenas Gerar Mutação</span>
                     </button>
                     <button type="button" id="btn-analyze-impact" class="btn btn-purple">
-                        <span class="btn-icon">📊</span>
                         <span class="btn-text-label">Avaliar Impacto Completo na Complexidade</span>
                     </button>
                 </div>
@@ -245,6 +244,10 @@
             </div>
 
             <div class="card-body">
+                <div id="notice-unchanged-container" class="notice-no-mutation" style="display: none;">
+                    <strong>Texto Inalterado:</strong> O operador selecionado não encontrou estruturas gramaticais elegíveis neste fragmento (ex.: orações passivas, adjuntos adverbiais móveis ou vocábulos com sinônimos/antônimos na WordNet). O texto permaneceu idêntico e a complexidade manteve-se inalterada (&Delta; = 0).
+                </div>
+
                 <!-- Textos Comparativos -->
                 <div class="comparison-grid">
                     <div class="text-comparison-pane pane-original">
@@ -287,7 +290,7 @@
                     <div class="impact-metric-box">
                         <span class="impact-metric-title">Variação de Score Contínuo</span>
                         <span id="delta-score-val" class="impact-metric-num delta-neutral">+0.0000</span>
-                        <span class="impact-metric-sub">$\Delta(\text{score}) \in [-3.0, +3.0]$</span>
+                        <span class="impact-metric-sub">&Delta;(score) &isin; [-3.0, +3.0]</span>
                     </div>
 
                     <div class="impact-metric-box">
